@@ -4,9 +4,10 @@
 **scene graph** of every frame (relations and actions between objects). It is built on
 [CVAT](https://github.com/cvat-ai/cvat) and runs entirely on your own server.
 
-![SG-Verify demo](docs/images/demo-previous-version.gif)
+![SG-Verify demo](docs/images/sg-verify-demo.gif)
 
-*Recording of the previous version.*
+*Fixing two masks with SAM3, renaming an object and editing the scene graph (sped up).
+[Better quality: MP4, 1 min](docs/images/sg-verify-demo.mp4).*
 
 ## Features
 
