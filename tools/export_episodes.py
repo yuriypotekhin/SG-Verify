@@ -254,7 +254,7 @@ def write_episode(d, ep, sparse=False):
             m = np.zeros((h, w), np.uint8)
             for p in pts or []:
                 m |= rle_decode(p, w, h)
-            Image.fromarray(m * 255, "L").save(osp.join(md, "frame_%06d.png" % f))
+            Image.fromarray(m.astype(np.uint8) * 255).save(osp.join(md, "frame_%06d.png" % f))
             n_files += 1
             n_nonempty += int(bool(pts))
     for fn, obj in (("graph.json", ep["graph"]), ("meta.json", ep["meta"])):

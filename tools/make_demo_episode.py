@@ -197,7 +197,7 @@ def main():
         img, masks = scene.render(t)
         Image.fromarray(img).save(osp.join(ep, "frames", "frame_%06d.png" % i))
         for oid, m in masks.items():
-            Image.fromarray(m.astype(np.uint8) * 255, "L").save(osp.join(ep, "masks", oid, "frame_%06d.png" % i))
+            Image.fromarray(m.astype(np.uint8) * 255).save(osp.join(ep, "masks", oid, "frame_%06d.png" % i))
         for t0, t1, act in PHASES:
             if t0 <= t < t1:
                 edges.setdefault(("action", "gripper", act, "cup"), []).append(i)
