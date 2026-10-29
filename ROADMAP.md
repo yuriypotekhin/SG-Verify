@@ -14,7 +14,8 @@ v0.1 is the version used for real review work on episodes of about 30 frames. Pl
 ## Graph layout
 - Done in v0.1: the layout does not depend on the panel width or on the frame (constant node set and scale),
   properties of one object are chips under its node, the graph and the timeline have separate areas.
-- Drag nodes with the mouse; the layout is saved per episode (in the task guide); *Reset layout*.
+- Drag nodes with the left mouse button on top of the initial layout (a short click stays a click, double click
+  renames); offsets kept in the browser per episode; *Reset layout* returns to the initial view.
 
 ## Objects
 - A **+ Object** button: add an object the pipeline missed (take a spare label or create a new label through the

@@ -100,7 +100,7 @@ function parseMeta(markdown: string): Meta {
 // arrows; an arrow that leaves a node through its bottom starts below the chips of that node.
 const NODE_H = 40;
 const CHIP_BAND = 42;                       // room under a node for two lines of property chips
-const GAP_X = 110;                          // room between two nodes of a row for an arrow label
+const GAP_X = 120;                          // room between two nodes of a row for an arrow label
 const ROW_H = NODE_H + CHIP_BAND + 78;      // node + chips + room for the arrows between rows
 function layout(nodes: Node[], widthOf: (n: Node) => number, levels: Record<string, number> = {}) {
     const hasLevels = Object.keys(levels).length > 0;
@@ -1187,7 +1187,7 @@ export default function SceneGraphSideBar(): JSX.Element {
     const NH = NODE_H;
     const isSel = (e: Edge): boolean => !!selected && selected.state.clientID === e.state.clientID;
     const labelBox = (x: number, y: number, text: string, sel: boolean, key: string, onClick: () => void): JSX.Element => {
-        const w = Math.max(44, 7 * text.length + 12);
+        const w = Math.max(44, 7 * text.length + 12);   // = labelW(text)
         return (
             <g key={key} className={`sg-edge ${sel ? 'sg-edge-selected' : ''}`} onClick={onClick}>
                 <rect x={x - w / 2} y={y - 9} width={w} height={18} rx={4} fill='#fff' stroke={sel ? '#1890ff' : '#999'} strokeWidth={sel ? 2 : 1} />
@@ -1201,7 +1201,9 @@ export default function SceneGraphSideBar(): JSX.Element {
 
     // an arrow between two nodes: a quadratic curve; edges of one pair fan out (k = index among them), an edge that
     // would cross another node goes around it; the ends are cut at the node borders
-    const arrowGeom = (from: string, to: string, k: number): { d: string; lx: number; ly: number } | null => {
+    const ARROW_HEAD = 12;   // length of the arrow head the label must not cover
+    const labelW = (text: string): number => Math.max(44, 7 * text.length + 12);
+    const arrowGeom = (from: string, to: string, k: number, label: string): { d: string; lx: number; ly: number } | null => {
         const a = pos[from]; const b = pos[to];
         const na = nodes.find((n) => n.role === from); const nb = nodes.find((n) => n.role === to);
         if (!a || !b || !na || !nb) return null;
@@ -1227,11 +1229,26 @@ export default function SceneGraphSideBar(): JSX.Element {
             if (sy <= sx && vy > 0) q.y += chipDepth[role] || 0;   // leaves through the bottom: start below the property chips
             return q;
         };
-        const sa = cut(a, NW(na), cx, cy, from); const sb = cut(b, NW(nb), cx, cy, to);
+        // a straight arrow is cut at the node borders along the line between the centres, a curved one towards its
+        // control point; the label goes to the middle of the visible part
+        const straight = !off;
+        const sa = straight ? cut(a, NW(na), b.x, b.y, from) : cut(a, NW(na), cx, cy, from);
+        const sb = straight ? cut(b, NW(nb), a.x, a.y, to) : cut(b, NW(nb), cx, cy, to);
+        let lx = straight ? (sa.x + sb.x) / 2 : 0.25 * sa.x + 0.5 * cx + 0.25 * sb.x;
+        let ly = straight ? (sa.y + sb.y) / 2 : 0.25 * sa.y + 0.5 * cy + 0.25 * sb.y;
+        // the label does not fit between the arrow ends: put it beside the line (above it, or to the right of a
+        // vertical one), so that both ends stay visible
+        const vx = sb.x - sa.x; const vy = sb.y - sa.y; const seg = Math.hypot(vx, vy) || 1;
+        if (straight && seg < labelW(label) + 2 * ARROW_HEAD + 4) {
+            let px = -vy / seg; let py = vx / seg;
+            if (py > 0.3 || (Math.abs(py) <= 0.3 && px < 0)) { px = -px; py = -py; }
+            const shift = Math.abs(py) > 0.3 ? 14 : labelW(label) / 2 + 6;
+            lx += px * shift; ly += py * shift;
+        }
         return {
-            d: `M${sa.x},${sa.y} Q${cx},${cy} ${sb.x},${sb.y}`,
-            lx: 0.25 * sa.x + 0.5 * cx + 0.25 * sb.x,
-            ly: 0.25 * sa.y + 0.5 * cy + 0.25 * sb.y,
+            d: straight ? `M${sa.x},${sa.y} L${sb.x},${sb.y}` : `M${sa.x},${sa.y} Q${cx},${cy} ${sb.x},${sb.y}`,
+            lx,
+            ly,
         };
     };
     const siblingIndex = <T extends { from: string; to: string }>(list: T[], e: T): number => {
@@ -1284,7 +1301,7 @@ export default function SceneGraphSideBar(): JSX.Element {
                 </g>
             );
         }
-        const g = arrowGeom(e.from, e.to, siblingIndex(edges, e));
+        const g = arrowGeom(e.from, e.to, siblingIndex(edges, e), e.value);
         if (!g) return null;
         return (
             <g key={key}>
@@ -1306,8 +1323,8 @@ export default function SceneGraphSideBar(): JSX.Element {
     edges.forEach((e) => { if (!allEdges.some((o) => o.from === e.from && o.to === e.to && o.value === e.value)) allEdges.push(e); });
     allEdges.forEach((e) => {
         if (isUnary(e)) return;
-        const g = arrowGeom(e.from, e.to, siblingIndex(allEdges, e));
-        if (g) grow(g.lx, g.ly, Math.max(30, 3.5 * e.value.length + 8));
+        const g = arrowGeom(e.from, e.to, siblingIndex(allEdges, e), e.value);
+        if (g) grow(g.lx, g.ly, labelW(e.value) / 2 + 4);
     });
     const vbW = ext.maxX - ext.minX; const vbH = ext.maxY - ext.minY;
     const nodeElems = nodes.map((n) => {
