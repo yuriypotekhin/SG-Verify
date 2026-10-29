@@ -1,0 +1,294 @@
+# SG-Verify stack: CVAT v2.75.0 server + SG-Verify UI + optional SAM3 tracking service.
+#
+# Derived from docker-compose.yml of CVAT v2.75.0
+# (Copyright (C) 2018-2022 Intel Corporation, Copyright (C) CVAT.ai Corporation, MIT License).
+#
+# Differences from the CVAT file, so that the stack can run next to other CVAT stacks on the same host:
+#   * no container_name and no fixed network / volume names: everything is prefixed by the compose project name;
+#   * no traefik labels and no docker.sock: our traefik routes by static rules (traefik/sg-verify.yml) only;
+#   * the web port is published on 127.0.0.1 only (reach it with an ssh tunnel or put your own proxy in front);
+#   * the analytics services (ClickHouse, Vector, Grafana) are not included.
+#
+# Usage (see README):  cp .env.example .env && <edit .env> && ./check_compose.sh && docker compose up -d
+#   with the SAM3 tracking service:  docker compose --profile gpu up -d
+
+x-backend-env: &backend-env
+  CVAT_POSTGRES_HOST: cvat_db
+  CVAT_REDIS_INMEM_HOST: cvat_redis_inmem
+  CVAT_REDIS_INMEM_PORT: 6379
+  CVAT_REDIS_ONDISK_HOST: cvat_redis_ondisk
+  CVAT_REDIS_ONDISK_PORT: 6666
+  CVAT_LOG_IMPORT_ERRORS: 'true'
+  CVAT_ALLOW_STATIC_CACHE: '${CVAT_ALLOW_STATIC_CACHE:-no}'
+  CVAT_DEFAULT_BACKING_CS_ID:
+  CVAT_NUM_PROXIES: '${CVAT_NUM_PROXIES:-1}'
+  CVAT_HEALTH_DISK_USAGE_MAX: '${CVAT_HEALTH_DISK_USAGE_MAX:-90}'
+  CVAT_ANALYTICS: 0
+  SMOKESCREEN_OPTS: ${SMOKESCREEN_OPTS:-}
+
+x-backend-deps: &backend-deps
+  cvat_redis_inmem:
+    condition: service_started
+  cvat_redis_ondisk:
+    condition: service_started
+  cvat_db:
+    condition: service_started
+
+x-backend-volumes: &backend-volumes
+  - cvat_data:/home/django/data
+  - cvat_keys:/home/django/keys
+  - cvat_logs:/home/django/logs
+
+services:
+  cvat_db:
+    image: postgres:15-alpine
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_DB: cvat
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - cvat_db:/var/lib/postgresql/data
+    networks:
+      - cvat
+
+  cvat_redis_inmem:
+    image: redis:7.2.11-alpine
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    command: [
+      "redis-server",
+      "--save", "60", "100",
+      "--appendonly", "yes",
+    ]
+    volumes:
+      - cvat_inmem_db:/data
+    networks:
+      - cvat
+
+  cvat_redis_ondisk:
+    image: apache/kvrocks:2.15.0
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    # see the CVAT compose file: kvrocks needs a separate init process
+    init: true
+    volumes:
+      - cvat_cache_db:/var/lib/kvrocks
+    networks:
+      - cvat
+    command: [
+      "--compact-cron", "0 3 * * *",
+      ]
+
+  cvat_server:
+    image: cvat/server:${CVAT_VERSION:-v2.75.0}
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    depends_on:
+      <<: *backend-deps
+      cvat_opa:
+        condition:
+          service_started
+    environment:
+      <<: *backend-env
+      # SG-Verify settings on top of CVAT production settings (sg_verify.py)
+      DJANGO_SETTINGS_MODULE: cvat.settings.sg_verify
+      SG_VERIFY_DEFAULT_ROLE: '${SG_VERIFY_DEFAULT_ROLE:-admin}'
+      DJANGO_MODWSGI_EXTRA_ARGS: ''
+      ALLOWED_HOSTS: '*'
+      ADAPTIVE_AUTO_ANNOTATION: 'false'
+      NUMPROCS: 2
+      CVAT_BASE_URL:
+      ONE_RUNNING_JOB_IN_QUEUE_PER_USER:
+    command: init run server nginx
+    volumes:
+      - cvat_data:/home/django/data
+      - cvat_keys:/home/django/keys
+      - cvat_logs:/home/django/logs
+      - ./sg_verify.py:/opt/cvat/cvat/settings/sg_verify.py:ro
+    networks:
+      cvat:
+        aliases:
+          - cvat-server
+
+  cvat_worker_utils:
+    image: cvat/server:${CVAT_VERSION:-v2.75.0}
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    depends_on: *backend-deps
+    environment:
+      <<: *backend-env
+      CVAT_REDIS_INMEM_PASSWORD: ''
+      NUMPROCS: 1
+    command: run worker notifications cleaning
+    volumes: *backend-volumes
+    networks:
+      - cvat
+
+  cvat_worker_import:
+    image: cvat/server:${CVAT_VERSION:-v2.75.0}
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    depends_on: *backend-deps
+    environment:
+      <<: *backend-env
+      NUMPROCS: 2
+    command: run worker import
+    volumes: *backend-volumes
+    networks:
+      - cvat
+
+  cvat_worker_export:
+    image: cvat/server:${CVAT_VERSION:-v2.75.0}
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    depends_on: *backend-deps
+    environment:
+      <<: *backend-env
+      NUMPROCS: 2
+    command: run worker export
+    volumes: *backend-volumes
+    networks:
+      - cvat
+
+  cvat_worker_annotation:
+    image: cvat/server:${CVAT_VERSION:-v2.75.0}
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    depends_on: *backend-deps
+    environment:
+      <<: *backend-env
+      NUMPROCS: 1
+    command: run worker annotation
+    volumes: *backend-volumes
+    networks:
+      - cvat
+
+  cvat_worker_webhooks:
+    image: cvat/server:${CVAT_VERSION:-v2.75.0}
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    depends_on: *backend-deps
+    environment:
+      <<: *backend-env
+      NUMPROCS: 1
+    command: run worker webhooks --with-scheduler
+    volumes: *backend-volumes
+    networks:
+      - cvat
+
+  cvat_worker_quality_reports:
+    image: cvat/server:${CVAT_VERSION:-v2.75.0}
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    depends_on: *backend-deps
+    environment:
+      <<: *backend-env
+      NUMPROCS: 1
+    command: run worker quality_reports
+    volumes: *backend-volumes
+    networks:
+      - cvat
+
+  cvat_worker_chunks:
+    image: cvat/server:${CVAT_VERSION:-v2.75.0}
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    depends_on: *backend-deps
+    environment:
+      <<: *backend-env
+      NUMPROCS: 2
+    command: run worker chunks
+    volumes: *backend-volumes
+    networks:
+      - cvat
+
+  cvat_worker_consensus:
+    image: cvat/server:${CVAT_VERSION:-v2.75.0}
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    depends_on: *backend-deps
+    environment:
+      <<: *backend-env
+      NUMPROCS: 1
+    command: run worker consensus
+    volumes: *backend-volumes
+    networks:
+      - cvat
+
+  cvat_ui:
+    image: ${SG_VERIFY_UI_IMAGE:-sg-verify/ui:v0.1}
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    depends_on:
+      - cvat_server
+    networks:
+      - cvat
+
+  traefik:
+    image: traefik:v3.6
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    ports:
+      - 127.0.0.1:${SG_VERIFY_PORT:-8080}:8080
+    environment:
+      TRAEFIK_ACCESSLOG_FORMAT: json
+      TRAEFIK_ACCESSLOG_FIELDS_DEFAULTMODE: drop
+      TRAEFIK_ACCESSLOG_FIELDS_NAMES_DownstreamStatus: keep
+      TRAEFIK_ACCESSLOG_FIELDS_NAMES_Duration: keep
+      TRAEFIK_ACCESSLOG_FIELDS_NAMES_RequestMethod: keep
+      TRAEFIK_ACCESSLOG_FIELDS_NAMES_RequestPath: keep
+      TRAEFIK_ACCESSLOG_FIELDS_NAMES_RouterName: keep
+      TRAEFIK_ACCESSLOG_FIELDS_NAMES_StartUTC: keep
+      TRAEFIK_LOG_FORMAT: json
+      TRAEFIK_ENTRYPOINTS_web_ADDRESS: :8080
+      # static routing rules only; the docker provider is deliberately not used
+      TRAEFIK_PROVIDERS_FILE_DIRECTORY: /etc/traefik/rules
+    volumes:
+      - ./traefik:/etc/traefik/rules:ro
+    networks:
+      - cvat
+    logging:
+      driver: "json-file"
+      options:
+        max-size: 100m
+        max-file: "10"
+
+  cvat_opa:
+    image: openpolicyagent/opa:1.12.2
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    networks:
+      cvat:
+        aliases:
+          - opa
+    command:
+      - run
+      - --server
+      - --addr=:8181
+      - --log-level=error
+      - --set=services.cvat.url=http://cvat-server:8080
+      - --set=bundles.cvat.service=cvat
+      - --set=bundles.cvat.resource=/api/auth/rules
+      - --set=bundles.cvat.polling.min_delay_seconds=5
+      - --set=bundles.cvat.polling.max_delay_seconds=15
+
+  # SAM3 tracking service (Track / Masks from boxes / Refine buttons); started only with --profile gpu
+  sg_tools:
+    profiles: [gpu]
+    image: ${SG_VERIFY_SAM_IMAGE:-sg-verify/sam-service:v0.1}
+    restart: ${SG_VERIFY_RESTART:-unless-stopped}
+    environment:
+      SAM3_CKPT: /models/sam3.pt
+      PACKAGES: /packages
+      SG_GPU_MEMORY_GB: '${SG_GPU_MEMORY_GB:-}'
+    volumes:
+      - ${SG_VERIFY_MODELS_DIR:-./models}:/models:ro
+      - ${SG_VERIFY_PACKAGES_DIR:-./packages}:/packages:ro
+      - ../sam-service/server.py:/srv/server.py:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['${SG_VERIFY_GPU:-0}']
+              capabilities: [gpu]
+    networks:
+      - cvat
+
+volumes:
+  cvat_db:
+  cvat_data:
+  cvat_keys:
+  cvat_logs:
+  cvat_inmem_db:
+  cvat_cache_db:
+
+networks:
+  cvat:

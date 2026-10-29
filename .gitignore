@@ -1,0 +1,12 @@
+# local deployment state (never commit)
+deploy/.env
+deploy/models/
+deploy/packages/
+deploy/backups/
+# build area of install.sh (CVAT clone) and the SAM3 sources cloned by install.sh --gpu
+build/
+sam-service/sam3/
+# data you prepare locally
+data/
+__pycache__/
+*.pyc

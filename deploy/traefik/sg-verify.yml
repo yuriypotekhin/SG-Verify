@@ -1,0 +1,29 @@
+# Static traefik routes of the SG-Verify stack (no docker labels, so other stacks on the host are not affected).
+# Longer rules win: /api, /static, ... go to the CVAT server, /sg-tools to the tracking service, the rest to the UI.
+http:
+  routers:
+    cvat:
+      entryPoints: [web]
+      rule: PathPrefix(`/api/`) || PathPrefix(`/static/`) || PathPrefix(`/admin`) || PathPrefix(`/django-rq`)
+      service: cvat
+    sg-tools:
+      entryPoints: [web]
+      rule: PathPrefix(`/sg-tools`)
+      service: sg-tools
+    cvat-ui:
+      entryPoints: [web]
+      rule: PathPrefix(`/`)
+      service: cvat-ui
+  services:
+    cvat:
+      loadBalancer:
+        servers:
+          - url: http://cvat_server:8080
+    cvat-ui:
+      loadBalancer:
+        servers:
+          - url: http://cvat_ui:8000
+    sg-tools:
+      loadBalancer:
+        servers:
+          - url: http://sg_tools:8000
