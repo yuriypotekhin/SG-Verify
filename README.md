@@ -24,17 +24,13 @@ Every button is explained in the [user guide](docs/USER_GUIDE.md).
 
 ## How it works
 
-SG-Verify is a set of Docker containers on your server. The browser talks only to them.
+Everything runs in Docker on your own server; you open SG-Verify in a browser. It has three parts:
 
-```
-browser ──> SG-Verify web app ──> CVAT backend (database, files)
-                   │
-                   └────────────> SAM3 tracking service (optional, GPU)
-```
-
-- **SG-Verify web app**: the CVAT v2.75.0 web interface with the scene graph panel.
-- **CVAT backend**: the standard open-source CVAT server that stores videos and annotations.
-- **SAM3 tracking service**: segments and tracks masks.
+| part | what it does |
+|---|---|
+| **SG-Verify web app** | what you see in the browser: the CVAT interface with the scene graph panel |
+| **CVAT backend** | stores the videos and the annotations (the standard open-source CVAT server and database) |
+| **SAM3 tracking service** | builds and tracks masks on the GPU; optional |
 
 ## Requirements
 
