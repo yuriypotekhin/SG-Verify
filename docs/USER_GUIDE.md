@@ -45,9 +45,9 @@ after each verdict the next unchecked episode opens by itself.
 +------+-----------------------------+--------------------------------------+-----------------+
 | CVAT | SG-Verify scene graph panel |                                      | CVAT objects    |
 | tool | - goal, verdict, objects    |            video frame               | sidebar         |
-| bar  | - buttons                   |       (boxes and masks drawn)        | (Objects,       |
-|      | - object tools              |                                      |  Labels,        |
-|      | - graph of this frame       |                                      |  Issues)        |
+| bar  | - buttons, object tools     |       (boxes and masks drawn)        | (Objects,       |
+|      | - graph of this frame       |                                      |  Labels,        |
+|      | ======= drag bar =======    |                                      |  Issues)        |
 |      | - timeline of all edges     |                                      |                 |
 +------+-----------------------------+--------------------------------------+-----------------+
 ```
@@ -56,7 +56,7 @@ after each verdict the next unchecked episode opens by itself.
   An object has a box track and/or masks. In the graph one object = one node.
 - **Edges** are CVAT tags `relation` (a state between two objects, e.g. *cup on table*) or `action`
   (*gripper holds cup*), one tag per frame. An edge to "none" is a property of a single object (*box open*) and is
-  drawn as a loop.
+  drawn as a small chip under the object's node.
 - The **goal** (or the scene description) and the object list come from the task guide.
 - Everything you change is ordinary CVAT annotation: **Save** (Ctrl+S) stores it, **Undo** (Ctrl+Z) reverts it.
   The verdict buttons save automatically.
@@ -92,7 +92,8 @@ The grey line under the buttons is a **hint**: it tells what the next click will
 
 The tools work on the **selected object**. Select it by clicking its box or mask on the frame, or by clicking its
 node in the graph (this also works on frames where the object has no box or mask). The line shows
-`name (role, mask, box)`; **×** clears the selection.
+`name (role, mask, box)`; **×** clears the selection. The same tools also appear next to the cursor when you
+**right-click an object on the frame** (to the right of the CVAT object card).
 
 | control | what it does |
 |---|---|
@@ -128,12 +129,16 @@ Then use **Track with SAM3** to carry the corrected mask through the video.
 ### 4.5 The graph of the current frame
 
 - A **node** is an object: bold name, role below. A pale dashed node has no box or mask on this frame (or its box
-  is hidden).
-- A **dashed** arrow is a relation, a **solid** arrow is an action, a **loop** is a property of one object.
-  The label on the arrow is the value.
+  is hidden). Every object of the episode has a node on every frame, so the picture keeps its shape while you play
+  the video; resizing the panel only zooms it.
+- Node rows come from the dataset (`level` of each object); without levels the nodes go two (three for more than four
+  objects) per row in the order of the object list.
+- A **dashed** arrow is a relation, a **solid** arrow is an action; the label on the arrow is the value.
+- A **chip under a node** is a property of that object (an edge to "none", e.g. *open*): dashed border = relation,
+  solid border = action. Click it to edit it like an edge.
 - **Click a node** to select the object for the object tools. **Double-click a node** to rename the object: the new
   name is written to all its boxes and masks on all frames and to the task guide.
-- **Click an arrow or its label** to edit the edge:
+- **Click an arrow, its label or a chip** to edit the edge:
 
 | control | what it does |
 |---|---|
@@ -169,6 +174,9 @@ cell means the edge exists on that frame (actions are drawn darker than relation
 
 - The icon at the top left of the panel collapses / expands it.
 - Drag the right edge of the panel to make it wider or narrower (the width is remembered).
+- The graph and the timeline have their own areas. Drag the horizontal bar between them to give one of them more
+  height (half and half by default, remembered). The graph always fits its area, so the timeline does not move when the
+  graph changes from frame to frame; a long timeline scrolls inside its area.
 - The selected object is slightly highlighted on the frame all the time.
 
 ## 5. Keyboard shortcuts

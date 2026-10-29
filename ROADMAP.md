@@ -12,10 +12,9 @@ v0.1 is the version used for real review work on episodes of about 30 frames. Pl
 - Test and report on 5, 30, 300 and 1000-frame episodes.
 
 ## Graph layout
-- Drag nodes with the mouse; the layout is saved per episode (in the task guide) and is the same on every frame.
-- A constant set of nodes for the whole episode and a constant scale (now nodes that appear on some frames only and
-  edge labels change the scale between frames).
-- *Reset layout*.
+- Done in v0.1: the layout does not depend on the panel width or on the frame (constant node set and scale),
+  properties of one object are chips under its node, the graph and the timeline have separate areas.
+- Drag nodes with the mouse; the layout is saved per episode (in the task guide); *Reset layout*.
 
 ## Objects
 - A **+ Object** button: add an object the pipeline missed (take a spare label or create a new label through the

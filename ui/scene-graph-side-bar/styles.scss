@@ -126,7 +126,71 @@
 }
 
 .sg-sidebar {
-    overflow-y: auto;
+    // the panel itself does not scroll: the graph fits its area and the timeline area scrolls (no horizontal scroll bar)
+    overflow: visible;
+
+    > .ant-layout-sider-children {
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+    }
+
+    .sg-main {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding-right: 6px;   // room for the resize bar on the right edge
+    }
+
+    .sg-top {
+        flex: none;
+    }
+
+    .sg-panes {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sg-graph-pane {
+        flex-grow: 0;
+        flex-shrink: 0;
+        min-height: 80px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .sg-svg-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        overflow: hidden;
+    }
+
+    .sg-hsplit {
+        flex: none;
+        height: 9px;
+        cursor: row-resize;
+        background: linear-gradient(to bottom, transparent 3px, #e5e5e5 3px, #e5e5e5 6px, transparent 6px);
+
+        &:hover {
+            background: linear-gradient(to bottom, transparent 3px, #91caff 3px, #91caff 6px, transparent 6px);
+        }
+    }
+
+    .sg-timeline-pane {
+        flex: 1 1 0;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
 
     .sg-timeline {
         padding: $grid-unit-size $grid-unit-size * 1.5;
@@ -297,10 +361,12 @@
         .sg-range {
             margin-top: 4px;
             display: flex;
+            flex-wrap: wrap;   // a narrow panel puts the buttons on several lines instead of cutting them off
             align-items: center;
-            gap: 6px;
+            gap: 4px 6px;
 
             .ant-input-number {
+                flex: none;
                 width: 56px;
             }
         }
@@ -356,7 +422,7 @@
     font-size: 11px;
 }
 
-// (unused) object tools next to the cursor
+// object tools next to the cursor (right click on an object on the frame)
 .sg-ctxtools {
     position: fixed;
     z-index: 1000;
