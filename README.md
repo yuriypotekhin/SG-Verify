@@ -115,7 +115,8 @@ buttons are hidden.
 2. **SAM3 code.** `install.sh --gpu` clones [facebookresearch/sam3](https://github.com/facebookresearch/sam3) into
    `sam-service/sam3` and builds the image `sg-verify/sam-service` from `sam-service/Dockerfile`.
 3. **Start:** `deploy/install.sh --gpu` (or `docker compose --profile gpu up -d` in `deploy/`).
-   `SG_VERIFY_GPU` selects the GPU; `SG_GPU_MEMORY_GB` caps the memory of the service when the GPU is shared.
+   `SG_VERIFY_GPU` selects the GPU; `SG_GPU_MEMORY_GB` caps the memory of the service when the GPU is shared
+   (SAM3 needs about 6 GB: a cap of 4 GB fails with an out-of-memory error; 8 GB is enough for 30-frame episodes).
 4. **Frames:** the service reads `deploy/packages/<task name>/frames.zip`. `tools/upload_episodes.py --packages-dir
    deploy/packages` puts every uploaded episode there.
 

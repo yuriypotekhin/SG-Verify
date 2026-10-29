@@ -40,5 +40,6 @@ v0.1 is the version used for real review work on episodes of about 30 frames. Pl
 ## Documentation and examples
 - A new demo recording of v0.1; screenshots for every part of the guide.
 - A Russian translation of the user guide.
-- Example converters for public video scene-graph datasets.
+- Example converters for public video scene-graph datasets; a real demo episode (after checking the license of its
+  source dataset) or a script that downloads one from its original source.
 - Unit tests for the data tools and an end-to-end test of upload → review → export.
