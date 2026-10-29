@@ -38,7 +38,8 @@ v0.1 is the version used for real review work on episodes of about 30 frames. Pl
 - Prebuilt images.
 
 ## Documentation and examples
-- A new demo recording of v0.1; screenshots for every part of the guide.
+- Screenshots for every part of the guide; a scripted demo (headless browser) that re-records the README animation
+  after interface changes.
 - A Russian translation of the user guide.
 - Example converters for public video scene-graph datasets; a real demo episode (after checking the license of its
   source dataset) or a script that downloads one from its original source.
