@@ -1,0 +1,448 @@
+@import 'base';
+
+.sg-sidebar {
+    background: $background-color-1;
+    border-right: 1px solid $border-color-1;
+    position: relative;
+    overflow: visible;
+
+    .sg-sidebar-toggle {
+        position: absolute;
+        top: 50%;
+        right: -14px;
+        width: 14px;
+        height: 40px;
+        line-height: 40px;
+        text-align: center;
+        background: $background-color-2;
+        border: 1px solid $border-color-1;
+        border-left: none;
+        cursor: pointer;
+        z-index: 10;
+        font-size: 10px;
+    }
+
+    .sg-header {
+        padding: $grid-unit-size $grid-unit-size * 1.5;
+        border-bottom: 1px solid $border-color-1;
+        font-size: 12px;
+
+        .sg-roles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px $grid-unit-size * 1.5;
+            margin-top: 2px;
+        }
+
+        .sg-dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            margin-right: 3px;
+            vertical-align: middle;
+        }
+    }
+
+    .sg-hint,
+    .sg-frame {
+        padding: 2px $grid-unit-size * 1.5;
+        font-size: 11px;
+        color: $text-color-secondary;
+    }
+
+    .sg-svg {
+        display: block;
+        margin: 0 auto;
+        user-select: none;
+    }
+
+    .sg-node,
+    .sg-edge {
+        cursor: pointer;
+    }
+
+    .sg-edge:hover text,
+    .sg-edge-selected text {
+        font-weight: 600;
+    }
+}
+
+.sg-popover {
+    display: flex;
+    flex-direction: column;
+    gap: $grid-unit-size;
+    min-width: 200px;
+
+    .sg-scope .ant-radio-button-wrapper {
+        font-size: 11px;
+        padding: 0 6px;
+    }
+}
+
+.sg-sidebar {
+    .sg-toolbar {
+        display: flex;
+        flex-wrap: wrap;   // narrow panel: the verdict buttons go to the next line instead of being cut off
+        gap: $grid-unit-size;
+        padding: $grid-unit-size $grid-unit-size * 1.5 0;
+
+        .sg-verify {
+            margin-left: auto;
+            color: #389e0d;
+            border-color: #389e0d;
+        }
+    }
+
+    .sg-node-pickable rect {
+        cursor: crosshair;
+    }
+}
+
+.sg-popover .sg-row {
+    display: flex;
+    gap: $grid-unit-size;
+}
+
+.sg-sidebar {
+    .sg-resizer {
+        position: absolute;
+        top: 0;
+        right: -8px;
+        width: 16px;
+        height: 100%;
+        cursor: col-resize;
+        z-index: 11;
+        background: linear-gradient(to right, transparent 5px, #e5e5e5 5px, #e5e5e5 11px, transparent 11px);
+
+        &:hover {
+            background: linear-gradient(to right, transparent 5px, #91caff 5px, #91caff 11px, transparent 11px);
+        }
+    }
+
+    .sg-sidebar-toggle {
+        top: 8px;
+    }
+}
+
+.sg-sidebar {
+    overflow-y: auto;
+
+    .sg-timeline {
+        padding: $grid-unit-size $grid-unit-size * 1.5;
+        border-top: 1px solid $border-color-1;
+        font-size: 11px;
+
+        .sg-tl-head {
+            display: flex;
+            justify-content: space-between;
+            color: $text-color-secondary;
+            margin-bottom: 4px;
+        }
+
+        .sg-tl-row {
+            display: flex;
+            align-items: center;
+            min-height: 26px;
+            margin-bottom: 3px;
+        }
+
+        .sg-tl-text {
+            display: inline-flex;
+            flex-direction: column;
+            line-height: 12px;
+            vertical-align: middle;
+
+            b {
+                font-size: 12px;
+            }
+
+            small {
+                font-size: 9px;
+                color: $text-color-secondary;
+            }
+
+            .sg-tl-action {
+                color: #1f1f1f;
+                text-decoration: underline;
+            }
+        }
+
+        .sg-tl-label {
+            flex: 0 0 38%;
+            width: 38%;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            padding-right: 6px;
+
+            .sg-dot {
+                flex: 0 0 9px;
+            }
+
+            .sg-tl-action {
+                color: #1f1f1f;
+                text-decoration: underline;
+            }
+        }
+
+
+        .sg-tl-bar {
+            flex: 1;
+            display: flex;
+            border-left: 1px solid #ddd;
+        }
+
+        .sg-tl-cell {
+            flex: 1 1 0;
+            min-width: 0;
+            aspect-ratio: 1;   // square cells: the height follows the panel width
+            max-height: 30px;
+            background: #f2f2f2;
+            border-right: 1px solid #fff;
+            cursor: pointer;
+
+            &.cur {
+                box-shadow: inset 0 0 0 2px #1890ff;
+            }
+        }
+
+        .sg-tl-axis .sg-tl-bar {
+            height: 12px;
+            border-left: none;
+        }
+
+        .sg-tl-axis {
+            min-height: 12px;
+        }
+
+        .sg-tl-tick {
+            flex: 1 1 0;
+            min-width: 0;
+            position: relative;
+            height: 12px;
+            border-left: 1px solid #eee;
+            cursor: pointer;
+
+            // the number is drawn over the neighbouring cells instead of being clipped by its narrow cell
+            span {
+                position: absolute;
+                left: 1px;
+                top: 0;
+                font-size: 9px;
+                line-height: 12px;
+                color: $text-color-secondary;
+                white-space: nowrap;
+                overflow: visible;
+            }
+
+            &.cur span {
+                color: #1890ff;
+                font-weight: 700;
+            }
+        }
+    }
+}
+
+.sg-popover .sg-range {
+    align-items: center;
+    font-size: 11px;
+
+    .ant-input-number {
+        width: 64px;
+    }
+}
+
+.sg-sidebar {
+    .sg-toolbar .sg-mismatch {
+        margin-left: auto;
+    }
+
+    .sg-toolbar .sg-verify {
+        margin-left: 0;
+    }
+
+    .sg-badge {
+        margin-left: 8px;
+        padding: 0 6px;
+        border-radius: 8px;
+        font-size: 10px;
+        font-weight: 600;
+        vertical-align: middle;
+
+        &.sg-badge-ok {
+            background: #f6ffed;
+            color: #389e0d;
+            border: 1px solid #b7eb8f;
+        }
+
+        &.sg-badge-bad {
+            background: #fff1f0;
+            color: #cf1322;
+            border: 1px solid #ffa39e;
+        }
+    }
+}
+
+.sg-sidebar {
+    .sg-boxtools {
+        padding: 2px $grid-unit-size * 1.5 $grid-unit-size;
+        border-bottom: 1px solid $border-color-1;
+        font-size: 11px;
+
+        .sg-boxtools-title {
+            color: $text-color-secondary;
+        }
+
+        .sg-range {
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+
+            .ant-input-number {
+                width: 56px;
+            }
+        }
+    }
+}
+
+.sg-sidebar .sg-boxtools .sg-tracking {
+    margin-top: 4px;
+    color: #1890ff;
+}
+
+// mask refinement by clicks: the mode row under the buttons
+.sg-sidebar .sg-boxtools .sg-refine {
+    flex-wrap: wrap;
+    padding: 4px 6px;
+    background: #f0f5ff;
+    border: 1px solid #adc6ff;
+    border-radius: 4px;
+}
+
+// verdict badge on the task card (Tasks list)
+.sg-task-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 0 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    vertical-align: middle;
+
+    &.sg-task-badge-ok {
+        background: #f6ffed;
+        color: #389e0d;
+        border: 1px solid #b7eb8f;
+    }
+
+    &.sg-task-badge-bad {
+        background: #fff1f0;
+        color: #cf1322;
+        border: 1px solid #ffa39e;
+    }
+
+    &.sg-task-badge-busy {
+        background: #fffbe6;
+        color: #ad6800;
+        border: 1px solid #ffe58f;
+    }
+}
+
+.sg-sidebar .sg-unmark {
+    padding: 0 4px;
+    height: 18px;
+    font-size: 11px;
+}
+
+// (unused) object tools next to the cursor
+.sg-ctxtools {
+    position: fixed;
+    z-index: 1000;
+    max-width: 260px;
+    padding: $grid-unit-size;
+    background: $background-color-1;
+    border: 1px solid $border-color-1;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 15%);
+    font-size: 11px;
+
+    .sg-ctxtools-title {
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+
+    .sg-range {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+
+        .ant-input-number {
+            width: 52px;
+        }
+    }
+}
+
+.sg-sidebar .sg-timeline {
+    .sg-tl-label-click {
+        cursor: pointer;
+
+        &:hover .sg-tl-text b {
+            text-decoration: underline;
+        }
+    }
+
+    .sg-tl-editing {
+        background: #e6f4ff;
+        border-radius: 3px;
+    }
+
+    .sg-tl-done {
+        padding: 0 4px;
+        height: 18px;
+        color: #389e0d;
+    }
+
+    // marks of the start and the end of a segment
+    .sg-tl-cell.mark-start {
+        box-shadow: inset 3px 0 0 #389e0d;
+    }
+
+    .sg-tl-cell.mark-end {
+        box-shadow: inset -3px 0 0 #cf1322;
+    }
+
+    .sg-tl-cell.mark-start.mark-end {
+        box-shadow: inset 3px 0 0 #389e0d, inset -3px 0 0 #cf1322;
+    }
+
+    .sg-tl-addrow {
+        min-height: 20px;
+
+        .ant-btn {
+            font-size: 11px;
+            padding: 0;
+        }
+    }
+
+    .sg-tl-hint {
+        margin-top: 4px;
+        color: #1890ff;
+        font-size: 10px;
+    }
+}
+
+.sg-sidebar .sg-timeline .sg-tl-hint {
+    .sg-tl-hint-buttons {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+}
+
+.sg-sidebar .sg-hint-inline {
+    color: $text-color-secondary;
+    font-size: 11px;
+}
