@@ -18,7 +18,6 @@
 - **Object tools** for a range of frames: interpolate or copy boxes, hide an object that left the frame, delete masks.
 - **Review workflow**: *Verified* / *Goal mismatch* verdicts, progress badges in the task list, Ctrl+Q opens the next
   unchecked video.
-- **Sign-in by name**, no registration.
 - **Data tools**: a simple folder format and scripts to load data into SG-Verify and export the result.
 
 Every button is explained in the [user guide](docs/USER_GUIDE.md).
