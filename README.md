@@ -91,10 +91,11 @@ my_episode/
   meta.json     the goal of the episode (optional)
 ```
 
-The format is described in [docs/DATA_FORMAT.md](docs/DATA_FORMAT.md). Load the data, review it, export the result:
+The format is described in [docs/DATA_FORMAT.md](docs/DATA_FORMAT.md). Load the data, review it and export the result
+(on the server, in the repository folder):
 
 ```bash
-pip install numpy Pillow requests
+python3 -m venv .venv && . .venv/bin/activate && pip install numpy Pillow requests
 python3 tools/make_demo_episode.py --out data/episodes          # a synthetic example
 python3 tools/to_cvat.py data/episodes data/packages --all
 export CVAT_URL=http://127.0.0.1:8080 CVAT_USER=<admin> CVAT_PASSWORD=<password>
