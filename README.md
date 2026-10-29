@@ -60,10 +60,24 @@ browser ── traefik (127.0.0.1:PORT) ──┬── /api, /admin, /static �
 ## Requirements
 
 - Linux with Docker 24+ and Docker Compose v2.
-- About 6 GB of disk for the CVAT images plus your data; 8 GB of RAM to build the UI image.
-- For tracking: an NVIDIA GPU with at least 8 GB of memory (tested on an RTX 3060 12 GB), NVIDIA driver 535+
-  (CUDA 12), the NVIDIA Container Toolkit, and about 10 GB more disk for the tracking image.
+- **Without tracking:** about 3 GB of RAM for the CVAT services, about 3 GB of disk for the images plus your data;
+  8 GB of RAM to build the UI image.
+- **With tracking (SAM3):** an NVIDIA GPU with 8 GB of memory for episodes up to about 100 frames, about 10 GB for
+  300 frames; NVIDIA driver 535+ (CUDA 12) and the NVIDIA Container Toolkit; about 2 GB more RAM, about 7 GB of disk
+  for the tracking image and 3.5 GB for the weights.
 - Python 3.8+ with `numpy`, `Pillow` and `requests` for the data tools.
+
+Measured on an RTX 3060 (12 GB), episodes of 640x480 frames (time of one request; the first request after the service
+starts also loads the model, about 25 s):
+
+| episode length | Track with SAM3 (whole episode) | Masks from boxes (every frame) | Refine (one click) | GPU memory |
+|---|---|---|---|---|
+| 30 frames | 11 s | 10 s | < 1 s | 5.6 GB |
+| 100 frames | 38 s | 37 s | < 1 s | 6.5 GB |
+| 300 frames | 116 s | about 110 s | < 1 s | 8.6 GB (fails with an 8 GB cap) |
+
+The time grows linearly, about 0.37 s per frame. The service keeps the frames of the last two episodes on the GPU;
+`SG_GPU_MEMORY_GB` caps its memory when the GPU is shared.
 
 ## Installation
 
@@ -116,7 +130,7 @@ buttons are hidden.
    `sam-service/sam3` and builds the image `sg-verify/sam-service` from `sam-service/Dockerfile`.
 3. **Start:** `deploy/install.sh --gpu` (or `docker compose --profile gpu up -d` in `deploy/`).
    `SG_VERIFY_GPU` selects the GPU; `SG_GPU_MEMORY_GB` caps the memory of the service when the GPU is shared
-   (SAM3 needs about 6 GB: a cap of 4 GB fails with an out-of-memory error; 8 GB is enough for 30-frame episodes).
+   (see the table in *Requirements*: with a 4 GB cap the model does not load, 8 GB is enough up to about 100 frames).
 4. **Frames:** the service reads `deploy/packages/<task name>/frames.zip`. `tools/upload_episodes.py --packages-dir
    deploy/packages` puts every uploaded episode there.
 
